@@ -50,12 +50,12 @@ public class FeedResponseEntry {
         this.summary = summary;
     }
 
-    @Override
-    public String toString() {
-        return
-                "name=" + name + '\n' +
-                ", imageUrl=" + imageUrl + '\n' +
-                ", releaseDate=" + releaseDate + '\n' +
-                ", artist=" + artist + '\n';
-    }
+//    @Override
+//    public String toString() {
+//        return
+//                "name=" + name + '\n' +
+//                ", imageUrl=" + imageUrl + '\n' +
+//                ", releaseDate=" + releaseDate + '\n' +
+//                ", artist=" + artist + '\n';
+//    }
 }
