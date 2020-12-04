@@ -1,5 +1,6 @@
 package com.JukanaCodes.toptendownloader;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.AsyncTask;
@@ -7,68 +8,127 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.Switch;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.channels.AsynchronousByteChannel;
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     private ListView listView;
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-
-        getMenuInflater().inflate(R.menu.feed_menu,menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int itemID = item.getItemId();
-        String feedUrl = "";
-
-        switch(itemID){
-            case R.id.menuFree:
-                feedUrl="http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/topfreeapplications/limit=10/xml";
-                break;
-            case R.id.menuPaid:
-                feedUrl = "http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/toppaidapplications/limit=10/xml";
-                break;
-            case R.id.menuSongs:
-                feedUrl = "http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/topsongs/limit=10/xml";
-                break;
-            default:
-                return super.onOptionsItemSelected(item);
-
-        }
-        newDownloader(feedUrl);
-        return super.onOptionsItemSelected(item);
-    }
-
-    public void newDownloader(String feedUrlString){
-
-        Log.d(TAG, "onCreate: starting");
-        Downloader downloader = new Downloader();
-        downloader.execute(feedUrlString);
-        Log.d(TAG, "onCreate: completed");
-    }
+    private String feedUrl = "http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/topfreeapplications/limit=%d/xml";
+    private int feedLimit = 10;
+    private String cachedFeedValue = "INVALIDATED";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         listView = findViewById(R.id.xmlListView);
+
+
+        if(savedInstanceState!= null){
+            feedLimit = savedInstanceState.getInt("limitValue");
+            feedUrl = savedInstanceState.getString("feedUrlValue");
+
+        }
+        newDownloader(String.format(feedUrl, feedLimit));
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        getMenuInflater().inflate(R.menu.feed_menu,menu);
+
+        if(feedLimit == 10){
+
+            menu.findItem(R.id.menu10).setChecked(true);
+        }
+        else{
+            menu.findItem(R.id.menu25).setChecked(true);
+
+        }
+
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int itemID = item.getItemId();
+
+         //*********Challenge solution*******//
+
+        switch(itemID){
+            case R.id.menuFree:
+                feedUrl="http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/topfreeapplications/limit=%d/xml";
+                break;
+            case R.id.menuPaid:
+                feedUrl = "http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/toppaidapplications/limit=%d/xml";
+                break;
+            case R.id.menuSongs:
+                feedUrl = "http://ax.itunes.apple.com/WebObjects/MZStoreServices.woa/ws/RSS/topsongs/limit=%d/xml";
+                break;
+
+            case R.id.menu10:
+
+               break;
+
+            case R.id.menu25:
+
+                if(!item.isChecked()){
+                    item.setChecked(true);
+                    feedLimit = 25;
+                }
+                break;
+
+            case R.id.mnuRefresh:
+
+                cachedFeedValue = "INVALIDATED";
+                Log.d(TAG, "onOptionsItemSelected: refreshing");
+                break;
+
+            default:
+                return super.onOptionsItemSelected(item);
+
+        }
+
+        newDownloader(String.format(feedUrl, feedLimit));
+        return true;
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt("limitValue",feedLimit);
+        outState.putString("feedUrlValue",String.format(feedUrl, feedLimit));
+    }
+
+    public void newDownloader(String feedUrlString){
+
+        if(!feedUrlString.equalsIgnoreCase(cachedFeedValue))
+        {
+            Log.d(TAG, "newDownloader: starting");
+            Downloader downloader = new Downloader();
+            downloader.execute(feedUrlString);
+            cachedFeedValue=feedUrlString;
+            Log.d(TAG, "newDownloader: completed");
+            
+        }
+        else
+            {
+                Log.d(TAG, "newDownloader: Url not Changed");
+            
+        }
+        
+    }
+
+
 
     private String downloadXML(String urlString) {
 
